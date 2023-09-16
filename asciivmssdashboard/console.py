@@ -7,19 +7,20 @@ Description: The power is in the terminal...
 License: MIT (see LICENSE.txt file for details)
 """
 
+
 from azure import *
 
 #Linux or Windows?
 oursystem = platform.system();
 
 #Our Home...
-HOMEUSER = expanduser("~") 
-HOMEDIR = HOMEUSER + "/.asciivmssdashboard"
+HOMEUSER = expanduser("~")
+HOMEDIR = f"{HOMEUSER}/.asciivmssdashboard"
 
 # Load Azure app defaults
 filepresent = 1
 try:
-        with open(HOMEDIR + '/asciivmssdashboard.json') as configFile:
+        with open(f'{HOMEDIR}/asciivmssdashboard.json') as configFile:
                 configData = json.load(configFile)
 except IOError or FileNotFoundError:
         # ---> In case we do not find our asciivmssdashboard.json config file, we will run in demo mode...
@@ -38,10 +39,7 @@ try:
         if filepresent: 
             configFile.close()
 except:
-        if (oursystem == "Linux"):
-            animationEnabled = "Yes"
-        else:
-            animationEnabled = "No"
+        animationEnabled = "Yes" if (oursystem == "Linux") else "No"
         # ---> "Missing 'animationEnabled' configuration parameter. Because we like it and was not simple to implement, we will assume you also like it..."
         # ---> "Use the asciivmssdashboard.json.tmpl file as a template to fill in your custom values..."
         if filepresent: 

@@ -83,35 +83,37 @@ def do_dcmark(window, coords, cor=11):
 	    cor = 5;
 	    dc_symbol = " ";
 
-	if sys.version_info.major >= 3:
-		#In Python +3 we can print in unicode a nice and bright block out-of-the-box!
-		wmove(window, coords[0], coords[1]); waddstr(window, dc_symbol, color_pair(cor) + A_BOLD);
+	if sys.version_info.major < 3 and (oursystem == "Linux"):
+		wmove(window, coords[0], coords[1]); waddstr(window, dc_symbol.encode("utf-8"), color_pair(cor) + A_BOLD);
 	else:
-		if (oursystem == "Linux"):
-		    wmove(window, coords[0], coords[1]); waddstr(window, dc_symbol.encode("utf-8"), color_pair(cor) + A_BOLD);
-		else:
-		    wmove(window, coords[0], coords[1]); waddstr(window, dc_symbol, color_pair(cor) + A_BOLD);
+		wmove(window, coords[0], coords[1]); waddstr(window, dc_symbol, color_pair(cor) + A_BOLD);
 
 #Mark Datacenters on world map...
 def mark_regions_map(window, continent):
-       if (continent != "southamerica" and continent != "northandcentralamerica" and continent != "europeandasia" and continent != "africa" and continent != "oceania"):
-          #TODO Handle it properly...
-          exit(1)
+	if continent not in [
+		"southamerica",
+		"northandcentralamerica",
+		"europeandasia",
+		"africa",
+		"oceania",
+	]:
+		#TODO Handle it properly...
+		exit(1)
 
-       if continent == 'southamerica':
-           lista = southamerica;
-       if continent == 'northandcentralamerica':
-           lista = northandcentralamerica;
-       if continent == 'europeandasia':
-           lista = europeandasia;
-       if continent == 'africa':
-           lista = africa;
-       if continent == 'oceania':
-           lista = oceania;
+	if continent == 'southamerica':
+	    lista = southamerica;
+	if continent == 'northandcentralamerica':
+	    lista = northandcentralamerica;
+	if continent == 'europeandasia':
+	    lista = europeandasia;
+	if continent == 'africa':
+	    lista = africa;
+	if continent == 'oceania':
+	    lista = oceania;
 
-       #Let's paint the globe...
-       for region in lista:
-           do_dcmark(window, dc_coords[region]);
+	#Let's paint the globe...
+	for region in lista:
+	    do_dcmark(window, dc_coords[region]);
 
 #Mark Deployment dc...
 def mark_vmss_dc(continent, window_old, old_location, window_new, new_location, dc):

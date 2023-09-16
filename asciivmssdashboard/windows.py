@@ -47,19 +47,11 @@ def draw_logo(window):
 
 #Create Windows...
 def create_window(x, y, w, z):
-        #window = newwin(lines, colunms, startline, startcolunm);
-	window = newwin(x, y, w, z);
-	#DEBUG
-        #box(window);
-	return window;
+	return newwin(x, y, w, z)
 
 #Draw VM...
 def draw_vm(vmc, window, ps, flag):
-	if (vmc < 100):
-		nr = "%03d" % vmc;
-	else:
-		nr = vmc;
-
+	nr = "%03d" % vmc if (vmc < 100) else vmc
 	if (ps.upper() == "SUCCEEDED"):
 		write_str_color(window, 1, 1, nr, 6, 1);
 	elif (ps.upper() == "CREATING"):	
@@ -78,10 +70,11 @@ def draw_vm(vmc, window, ps, flag):
 		box(window);
 
 def do_update_bar(window, sp, flag):
-	a = bar = 22; total = 34;
+	a = bar = 22
+	total = 34;
 	curstep = bar + sp;
 
-	if (curstep > total): curstep = total;
+	curstep = min(curstep, total);
 	if (flag != 1): total = curstep;
 
 	while (a < total):
@@ -168,19 +161,61 @@ def draw_gauge(window, used, limit):
 def get_continent_dc(dc):
 	if (dc == "brazilsouth"):
 		return 'southamerica';
-	if (dc == "southcentralus" or dc == "northcentralus" or dc == "westcentralus" or dc == "eastus" or dc == "eastus2" or dc == "centralus" or dc == "westus" or dc == "westus2" or dc == "canadacentral" or dc == "canadaeast"):
+	if dc in [
+		"southcentralus",
+		"northcentralus",
+		"westcentralus",
+		"eastus",
+		"eastus2",
+		"centralus",
+		"westus",
+		"westus2",
+		"canadacentral",
+		"canadaeast",
+	]:
 		return 'northandcentralamerica';
-	if (dc == "northeurope" or dc == "uksouth" or dc == "ukwest" or dc == "westeurope" or dc == "francecentral" or dc == "francesouth" or dc == "germanycentral" or dc == "germanynorth" or dc == "germanynortheast" or dc == "germanywestcentral" or dc == "switzerlandwest" or dc == "switzerlandnorth" or dc == "eastasia" or dc == "southeastasia" or dc == "japaneast" or dc == "japanwest" or dc == "westindia" or dc == "centralindia" or dc == "southindia" or dc == "chinaeast" or dc == "chinaeast2" or dc == "chinanorth" or dc == "koreacentral" or dc == "koreasouth" or dc == "chinanorth2" or dc == "norwaywest" or dc == "norwayeast"):
+	if dc in [
+		"northeurope",
+		"uksouth",
+		"ukwest",
+		"westeurope",
+		"francecentral",
+		"francesouth",
+		"germanycentral",
+		"germanynorth",
+		"germanynortheast",
+		"germanywestcentral",
+		"switzerlandwest",
+		"switzerlandnorth",
+		"eastasia",
+		"southeastasia",
+		"japaneast",
+		"japanwest",
+		"westindia",
+		"centralindia",
+		"southindia",
+		"chinaeast",
+		"chinaeast2",
+		"chinanorth",
+		"koreacentral",
+		"koreasouth",
+		"chinanorth2",
+		"norwaywest",
+		"norwayeast",
+	]:
 		return 'europeandasia';
-	if (dc == "uaecentral" or dc == "uaenorth" or dc == "southafricanorth" or dc == "southafricawest"):
+	if dc in ["uaecentral", "uaenorth", "southafricanorth", "southafricawest"]:
 		return 'africa';
-	if (dc == "australiacentral" or dc == "australiacentral2" or dc == "australiaeast" or dc == "australiasoutheast"):
+	if dc in [
+		"australiacentral",
+		"australiacentral2",
+		"australiaeast",
+		"australiasoutheast",
+	]:
 		return 'oceania';
 
 def resize_terminal():
-	#errnr = call(["resize", "-s 55 235 >/dev/null"]);
-	errnr = 1;
-	return errnr;
+	return 1
 
 def clean_gauge(window):
         #A quick clean up first...
@@ -203,11 +238,10 @@ def clean_monitor_form(window):
 def clean_insights(window, cor):
 	#Window Insights...
 	x, y = getmaxyx(window);
-	a = 1;
-	while (a < 16):
-		wmove(window, a, 1); wclrtoeol(window);
+	for a in range(1, 16):
+		wmove(window, a, 1)
+		wclrtoeol(window);
 		draw_line_color(window, a, 1, y - 2, ACS_HLINE, cor);
-		a += 1;
 	box(window);
 	write_str(window, 0, 30, " SAMPLE: ");
 	write_str(window, 0, 57, " MAX: ");
@@ -216,19 +250,15 @@ def clean_insights(window, cor):
 	write_str_color(window, 0, 5, " INSIGHTS: ", 3, 0);
 
 def clean_vm(window):
-	#Window VM...
-	a = 2;
-	while (a < 10):
-		wmove(window['vm'], a, 17); wclrtoeol(window['vm']);
-		a += 1;
-	a = 11;
-	while (a < 15):
-		wmove(window['vm'], a, 12); wclrtoeol(window['vm']);
-		a += 1;
-	a = 16;
-	while (a < 19):
-		wmove(window['vm'], a, 11); wclrtoeol(window['vm']);
-		a += 1;
+	for a in range(2, 10):
+		wmove(window['vm'], a, 17)
+		wclrtoeol(window['vm']);
+	for a in range(11, 15):
+		wmove(window['vm'], a, 12)
+		wclrtoeol(window['vm']);
+	for a in range(16, 19):
+		wmove(window['vm'], a, 11)
+		wclrtoeol(window['vm']);
 	box(window['vm']);
 	write_str_color(window['vm'], 0, 5, " VM ", 3, 0);
 
@@ -244,14 +274,12 @@ def clean_forms(window):
 	write_str_color(window['monitor'], 0, 5, " VM UPDATE MONITOR ", 3, 0);
 
 def clean_infoandsys(window):
-	#Info and Sys Windows...
-	a = 1;
-	while (a < 5):
+	for a in range(1, 5):
 		#Clean up lines...
-		wmove(window['vmss_info'], a, 1); wclrtoeol(window['vmss_info']);
-		wmove(window['system'], a, 1); wclrtoeol(window['system']);
-		a += 1;
-
+		wmove(window['vmss_info'], a, 1)
+		wclrtoeol(window['vmss_info']);
+		wmove(window['system'], a, 1)
+		wclrtoeol(window['system']);
 	#Create Info form...
 	create_vmssinfo_form(window['vmss_info']);
 	#Create Sys form...
@@ -356,11 +384,7 @@ def draw_insights(window, values, title, metric, flag):
 	global sample_one, sample_two;
 
 	#Which counter should we use?
-	if (metric == "One"):
-		sample = sample_one;
-	else:
-		sample = sample_two;
-
+	sample = sample_one if (metric == "One") else sample_two
 	#If we have a flag, means that we switched RG and VMSS and so we need to reset...
 	if (flag): sample = 0;
 	sample += 1;
@@ -392,7 +416,8 @@ def draw_insights(window, values, title, metric, flag):
 			vlines[index] = 0;
 		index += 1;
 
-	index = 0; column = 2;
+	index = 0
+	column = 2;
 	while (index < values.__len__()):
 		write_str(window, 0, 126, values[index]);
 		write_str(window, 0, 126 + len(str(values[index])), " ");
