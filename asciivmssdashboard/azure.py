@@ -8,11 +8,12 @@ Description: The power is in the terminal...
 License: MIT (see LICENSE.txt file for details)
 """
 
+
 from includes import *
 
 #Our Home...
 HOMEUSER = expanduser("~")
-HOMEDIR = HOMEUSER + "/.asciivmssdashboard"
+HOMEDIR = f"{HOMEUSER}/.asciivmssdashboard"
 
 # Make sure we have our home...
 try:
@@ -28,8 +29,8 @@ except OSError as e:
 # Load Azure app defaults
 filepresent = 1
 try:
-	with open(HOMEDIR + '/asciivmssdashboard.json') as configFile:
-		configData = json.load(configFile)
+        with open(f'{HOMEDIR}/asciivmssdashboard.json') as configFile:
+                configData = json.load(configFile)
 except IOError or FileNotFoundError:
         # ---> In case we do not find our asciivmssdashboard.json config file, we will run in demo mode...
         filepresent = 0
@@ -85,18 +86,18 @@ except:
 
 #If we are in demo mode, we need to make sure the following variables are in synch...
 if (demoEnabled.lower() == "yes"):
-    rgname = "dashdemo"
-    vmssname = "dashdemo"
-    interval = 10
-    logEnabled = "Yes"
-    logLevel = "INFO"
-    purgeLog = "Yes"
-    logName = HOMEDIR + "/asciivmssdashboard.log"
-    insightsOneEnabled = "Yes"
-    insightsOneTitle = "REQS"
-    insightsTwoEnabled = "Yes"
-    insightsTwoTitle = "RT(ms)"
-    insightsInterval = 1
+        rgname = "dashdemo"
+        vmssname = "dashdemo"
+        interval = 10
+        logEnabled = "Yes"
+        logLevel = "INFO"
+        purgeLog = "Yes"
+        logName = f"{HOMEDIR}/asciivmssdashboard.log"
+        insightsOneEnabled = "Yes"
+        insightsOneTitle = "REQS"
+        insightsTwoEnabled = "Yes"
+        insightsTwoTitle = "RT(ms)"
+        insightsInterval = 1
 
 #Region...
 region=""
@@ -109,8 +110,11 @@ insights_flag = 0;
 
 #Window VM
 countery=0
-window_vm = []; panel_vm = []; instances_deployed = [];
-vm_details = ""; vm_nic = "";
+window_vm = []
+panel_vm = []
+instances_deployed = [];
+vm_details = ""
+vm_nic = "";
 page = 1;
 
 #Flag to quit...

@@ -19,10 +19,7 @@ def _seek_to_n_lines_from_end_ng(f, numlines=10):
 	"""
 	(Python3) Seek to `numlines` lines from the end of the file `f`.
 	"""
-	line_count = 0;
-
-	for line in f:
-		line_count += 1;
+	line_count = sum(1 for _ in f)
 	pos = line_count - numlines;
 	if (pos >= 0):
 		f.seek(pos, 0);
@@ -46,12 +43,11 @@ def _seek_to_n_lines_from_end(f, numlines=10):
 			if file_pos == 0:
 				# start of file
 				break
-			else:
-				toread = min(1024, file_pos)
-				f.seek(-toread, 1)
-				buf = f.read(toread) + buf[:buf_pos]
-				f.seek(-toread, 1)
-				buf_pos = len(buf) - 1
+			toread = min(1024, file_pos)
+			f.seek(-toread, 1)
+			buf = f.read(toread) + buf[:buf_pos]
+			f.seek(-toread, 1)
+			buf_pos = len(buf) - 1
 		else:
 			# found a line
 			buf_pos = newline_pos
@@ -80,25 +76,23 @@ def tail(filename, run_event, starting_lines=10):
 		new_size = os.stat(filename).st_size
 
 		where = f.tell()
-		line = f.readline()
-		if not line:
-			if new_size < current_size:
-				# the file was probably truncated, reopen
-				f = open(filename)
-				current_size = new_size
-				dashes = "-" * 20
-				yield "\n"
-				yield "\n"
-				yield "%s file was truncated %s" % (dashes, dashes)
-				yield "\n"
-				yield "\n"
-				time.sleep(0.25)
-			else:
-				time.sleep(0.25)
-				f.seek(where)
-		else:
+		if line := f.readline():
 			current_size = new_size
 			yield line
+		elif new_size < current_size:
+			# the file was probably truncated, reopen
+			f = open(filename)
+			dashes = "-" * 20
+			current_size = new_size
+			yield "\n"
+			yield "\n"
+			yield f"{dashes} file was truncated {dashes}"
+			yield "\n"
+			yield "\n"
+			time.sleep(0.25)
+		else:
+			time.sleep(0.25)
+			f.seek(where)
 
 
 def tail_in_window(filename, window, panel, run_event):
@@ -113,11 +107,13 @@ def tail_in_window(filename, window, panel, run_event):
 
 	for line in tail(filename, run_event, max_lines - 3):
 		if len(line) > max_line_len:
-			first_portion = line[0:max_line_len - 1] + "\n"
+			first_portion = line[:max_line_len - 1] + "\n"
 			trailing_len = max_line_len - (len("> ") + 1)
-			remaining = ["> " + line[i:i + trailing_len] + "\n"
-				for i in range(max_line_len - 1, len(line), trailing_len)]
-			remaining[-1] = remaining[-1][0:-1]
+			remaining = [
+				f"> {line[i:i + trailing_len]}" + "\n"
+				for i in range(max_line_len - 1, len(line), trailing_len)
+			]
+			remaining[-1] = remaining[-1][:-1]
 			line_portions = [first_portion] + remaining
 		else:
 			line_portions = [line]
@@ -131,11 +127,9 @@ def tail_in_window(filename, window, panel, run_event):
 						wdeleteln(window)
 						wmove(window, y - 1, 1)
 						wdeleteln(window)
-						waddstr(window, line_portion)
 					else:
 						wmove(window, y, x + 1)
-						waddstr(window, line_portion)
-
+					waddstr(window, line_portion)
 					#We save the cursor position, write the title, and put the cursor back in curse...
 					y, x = getyx(window)
 					box(window)
@@ -148,7 +142,6 @@ def tail_in_window(filename, window, panel, run_event):
 						#wrefresh(window)
 						update_panels();
 						#doupdate();
-				#except KeyboardInterrupt:
 				except:
 					print("PROBLEM");
 

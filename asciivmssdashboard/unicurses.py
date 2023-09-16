@@ -37,7 +37,10 @@ code = locale.getpreferredencoding()   # TODO: fix this to actually work on nati
 try:
     import ctypes
 except ImportError:
-    print("Fatal error: this Python release does not support ctypes, please upgrade your Python distribution if you want to use UniCurses on a "+sys.platform+" platform.\n")
+    print(
+        f"Fatal error: this Python release does not support ctypes, please upgrade your Python distribution if you want to use UniCurses on a {sys.platform}"
+        + " platform.\n"
+    )
     raise ImportError("UniCurses initialization error - ctypes FFI not supported.")
 
 try:
@@ -56,11 +59,16 @@ except ImportError:
             pdcurses = "pdc34dll/pdcurses64.dll"
 
         current_dir = os.path.dirname(os.path.realpath(__file__))
-        path_to_pdcurses = current_dir + "/" + pdcurses
+        path_to_pdcurses = f"{current_dir}/{pdcurses}"
         #print("Expecting pdcurses at: " + path_to_pdcurses)
         if not (os.access(pdcurses, os.F_OK) or os.access(path_to_pdcurses, os.F_OK)):
-            print("Fatal error: can't find " + pdcurses + " for linking, make sure PDCurses v3.4+ is in the same folder as UniCurses if you want to use UniCurses on a "+sys.platform+" platform.\n")
-            raise ImportError("UniCurses initialization error = " + pdcurses + " not found: " + path_to_pdcurses)
+            print(
+                f"Fatal error: can't find {pdcurses} for linking, make sure PDCurses v3.4+ is in the same folder as UniCurses if you want to use UniCurses on a {sys.platform}"
+                + " platform.\n"
+            )
+            raise ImportError(
+                f"UniCurses initialization error = {pdcurses} not found: {path_to_pdcurses}"
+            )
         pdlib = ctypes.CDLL(path_to_pdcurses)   # we're on winXX, use pdcurses instead of native ncurses
 
 # +++ PDCurses/NCurses curses.h marco wrappers and other prereqs +++
@@ -93,20 +101,24 @@ def ucs_reconfigure(wrapper_ncurses, wrapper_pdcurses):
             try:
                 pdlib = ctypes.CDLL(wrapper_ncurses)
             except:
-                raise Exception("UCS_CONFIGURE: There was an error configuring the NCurses wrapper using the library "+wrapper_ncurses+".")
+                raise Exception(
+                    f"UCS_CONFIGURE: There was an error configuring the NCurses wrapper using the library {wrapper_ncurses}."
+                )
     else:
         if wrapper_pdcurses == UCS_DEFAULT_WRAPPER:
-            NCURSES = False
             try:
                 pdlib = ctypes.CDLL("pdcurses.dll")
             except:
                 raise Exception("UCS_CONFIGURE: There was an error configuring the default PDCurses wrapper, make sure pdcurses.dll is available in the same folder as UniCurses.")
         else:
-            NCURSES = False
             try:
                 pdlib = ctypes.CDLL(wrapper_pdcurses)
             except:
-                raise Exception("UCS_CONFIGURE: There was an error configuring the PDCurses wrappr using th library "+wrapper_pdcurses+".")
+                raise Exception(
+                    f"UCS_CONFIGURE: There was an error configuring the PDCurses wrappr using th library {wrapper_pdcurses}."
+                )
+
+        NCURSES = False
 
 
 # Return a bytes-encoded C style string from anything that's convertable with str.
@@ -154,8 +166,6 @@ if not NCURSES:
     PDC_A_ITALIC = PDC_A_INVIS
     PDC_A_PROTECT = (PDC_A_UNDERLINE | PDC_A_LEFTLINE | PDC_A_RIGHTLINE)
 
-# Key mapping (PDC)
-if not NCURSES:
     PDC_KEY_CODE_YES =  0x100  # If get_wch() gives a key code 
     PDC_KEY_BREAK    =  0x101  # Not on PC KBD 
     PDC_KEY_DOWN     =  0x102  # Down arrow key 
@@ -251,8 +261,6 @@ if not NCURSES:
     PDC_KEY_MOUSE    =  0x21b
     PDC_KEY_RESIZE   =  0x222
 
-# Mouse mapping (PDC)
-if not NCURSES:
     PDC_BUTTON1_RELEASED       =  0x00000001
     PDC_BUTTON1_PRESSED        =  0x00000002
     PDC_BUTTON1_CLICKED        =  0x00000004
@@ -291,7 +299,6 @@ if not NCURSES:
 OK = 0
 ERR = -1
 
-# Attributes
 if NCURSES:
     A_ALTCHARSET = curses.A_ALTCHARSET
     A_BLINK = curses.A_BLINK
@@ -309,6 +316,14 @@ if NCURSES:
         A_INVIS = curses.A_INVIS
     except:
         A_INVIS = A_NORMAL
+    COLOR_BLACK=curses.COLOR_BLACK
+    COLOR_BLUE=curses.COLOR_BLUE
+    COLOR_CYAN=curses.COLOR_CYAN
+    COLOR_GREEN=curses.COLOR_GREEN
+    COLOR_MAGENTA=curses.COLOR_MAGENTA
+    COLOR_RED=curses.COLOR_RED
+    COLOR_WHITE=curses.COLOR_WHITE
+    COLOR_YELLOW=curses.COLOR_YELLOW
 else:
     A_ALTCHARSET = PDC_A_ALTCHARSET
     A_BLINK = PDC_A_BLINK
@@ -324,17 +339,6 @@ else:
     A_COLOR = PDC_A_COLOR
     A_CHARTEXT = PDC_A_CHARTEXT
 
-# Colors
-if NCURSES:
-    COLOR_BLACK=curses.COLOR_BLACK
-    COLOR_BLUE=curses.COLOR_BLUE
-    COLOR_CYAN=curses.COLOR_CYAN
-    COLOR_GREEN=curses.COLOR_GREEN
-    COLOR_MAGENTA=curses.COLOR_MAGENTA
-    COLOR_RED=curses.COLOR_RED
-    COLOR_WHITE=curses.COLOR_WHITE
-    COLOR_YELLOW=curses.COLOR_YELLOW
-else:
     COLOR_BLACK = 0
     COLOR_BLUE = 1
     COLOR_GREEN = 2
@@ -752,13 +756,12 @@ if not NCURSES:
 
 # functions
 def waddch(scr_id, ch, attr=A_NORMAL):
-    if NCURSES:
-        try:
-            return scr_id.addch(ch, attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.waddch(scr_id, ch | attr)
+    try:
+        return scr_id.addch(ch, attr)
+    except curses.error:
+        return ERR
 
 def waddstr(scr_id, cstr, attr="NO_USE"):
     if NCURSES:
@@ -787,112 +790,100 @@ def waddnstr(scr_id, cstr, n, attr="NO_USE"):
         return ret
 
 def wattroff(scr_id, attr):
-    if NCURSES:
-        try:
-            return scr_id.attroff(attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wattroff(scr_id, attr)
+    try:
+        return scr_id.attroff(attr)
+    except curses.error:
+        return ERR
 
 def wattron(scr_id, attr):
-    if NCURSES:
-        try:
-            return scr_id.attron(attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wattron(scr_id, attr)
+    try:
+        return scr_id.attron(attr)
+    except curses.error:
+        return ERR
 
 def wattrset(scr_id, attr):
-    if NCURSES:
-        try:
-            return scr_id.attrset(attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wattrset(scr_id, attr)
+    try:
+        return scr_id.attrset(attr)
+    except curses.error:
+        return ERR
 
 def baudrate():
-    if NCURSES:
-        try:
-            return curses.baudrate()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.baudrate()
+    try:
+        return curses.baudrate()
+    except curses.error:
+        return ERR
 
 def beep():
-    if NCURSES:
-        try:
-            return curses.beep()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.beep()
+    try:
+        return curses.beep()
+    except curses.error:
+        return ERR
 
 def wbkgd(scr_id, ch, attr=A_NORMAL):
-    if NCURSES:
-        try:
-            return scr_id.bkgd(ch, attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wbkgd(scr_id, ch | attr)
+    try:
+        return scr_id.bkgd(ch, attr)
+    except curses.error:
+        return ERR
 
 def wbkgdset(scr_id, ch, attr=A_NORMAL):
-    if NCURSES:
-        try:
-            return scr_id.bkgdset(ch, attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wbkgdset(scr_id, ch | attr)
+    try:
+        return scr_id.bkgdset(ch, attr)
+    except curses.error:
+        return ERR
 
 def wborder(scr_id, ls=ACS_VLINE, rs=ACS_VLINE, ts=ACS_HLINE, bs=ACS_HLINE, tl=ACS_ULCORNER, tr=ACS_URCORNER, bl=ACS_LLCORNER, br=ACS_LRCORNER):
-    if NCURSES:
-        try:
-            return scr_id.border(ls, rs, ts, bs, tl, tr, bl, br)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wborder(scr_id, ls, rs, ts, bs, tl, tr, bl, br)
+    try:
+        return scr_id.border(ls, rs, ts, bs, tl, tr, bl, br)
+    except curses.error:
+        return ERR
 
 def box(scr_id, verch=ACS_VLINE, horch=ACS_HLINE):
-    if NCURSES:
-        try:
-            return scr_id.box(verch, horch)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.box(scr_id, verch, horch)
+    try:
+        return scr_id.box(verch, horch)
+    except curses.error:
+        return ERR
 
 def can_change_color():
-    if NCURSES:
-        try:
-            return curses.can_change_color()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.can_change_color() == 1)
+    try:
+        return curses.can_change_color()
+    except curses.error:
+        return ERR
 
 def cbreak():
-    if NCURSES:
-        try:
-            return curses.cbreak()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.cbreak()
+    try:
+        return curses.cbreak()
+    except curses.error:
+        return ERR
 
 def wchgat(scr_id, num, attr, color, opts=None):
-    if NCURSES:
-        try:
-            return scr_id.chgat(num, attr | color_pair(color))
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wchgat(scr_id, num, attr, color, None)
+    try:
+        return scr_id.chgat(num, attr | color_pair(color))
+    except curses.error:
+        return ERR
 
 def color_content(color_number):
     if NCURSES:
@@ -908,136 +899,127 @@ def color_content(color_number):
         return (r.value, g.value, b.value)
 
 def color_pair(color_number):
-    if NCURSES:
-        try:
-            return curses.color_pair(color_number)
-        except curses.error:
-            return ERR
-    else:
-        return PD_COLOR_PAIR(color_number)   
+    if not NCURSES:
+        return PD_COLOR_PAIR(color_number)
+    try:
+        return curses.color_pair(color_number)
+    except curses.error:
+        return ERR   
 
 def COLOR_PAIR(n): return color_pair(n)
 
 def copywin(src_id, dest_id, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, overlay):
-    if NCURSES:
-        try:
-            if overlay:
-                return src_id.overlay(dest_id, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol)
-            else:
-                return src_id.overwrite(dest_id, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.copywin(src_id, dest_id, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, overlay)
+    try:
+        return (
+            src_id.overlay(
+                dest_id, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol
+            )
+            if overlay
+            else src_id.overwrite(
+                dest_id, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol
+            )
+        )
+    except curses.error:
+        return ERR
     
 def wclear(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.clear()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wclear(scr_id)
+    try:
+        return scr_id.clear()
+    except curses.error:
+        return ERR
 
 def wclrtobot(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.clrtobot()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wclrtobot(scr_id)
+    try:
+        return scr_id.clrtobot()
+    except curses.error:
+        return ERR
 
 def wclrtoeol(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.clrtoeol()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wclrtoeol(scr_id)
+    try:
+        return scr_id.clrtoeol()
+    except curses.error:
+        return ERR
 
 def clearok(scr_id, yes):
-    if NCURSES:
-        try:
-            return scr_id.clearok(yes)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.clearok(scr_id, yes)
+    try:
+        return scr_id.clearok(yes)
+    except curses.error:
+        return ERR
 
 def curs_set(visibility):
-    if NCURSES:
-        try:
-            return curses.curs_set(visibility)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.curs_set(visibility)
+    try:
+        return curses.curs_set(visibility)
+    except curses.error:
+        return ERR
 
 def cursyncup(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.cursyncup()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wcursyncup(scr_id)
+    try:
+        return scr_id.cursyncup()
+    except curses.error:
+        return ERR
 
 def def_prog_mode():
-    if NCURSES:
-        try:
-            return curses.def_prog_mode()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.def_prog_mode()
+    try:
+        return curses.def_prog_mode()
+    except curses.error:
+        return ERR
 
 def def_shell_mode():
-    if NCURSES:
-        try:
-            return curses.def_shell_mode()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.def_shell_mode()
+    try:
+        return curses.def_shell_mode()
+    except curses.error:
+        return ERR
 
 def delay_output(ms):
-    if NCURSES:
-        try:
-            return curses.delay_output(ms)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.delay_output(ms)
+    try:
+        return curses.delay_output(ms)
+    except curses.error:
+        return ERR
 
 def wdelch(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.delch()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wdelch(scr_id)
+    try:
+        return scr_id.delch()
+    except curses.error:
+        return ERR
 
 def wdeleteln(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.deleteln()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wdeleteln(scr_id)
+    try:
+        return scr_id.deleteln()
+    except curses.error:
+        return ERR
 
 def delwin(scr_id):
-    if NCURSES:
-        try:
-            del(scr_id)
-            return OK
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.delwin(scr_id)
+    try:
+        del(scr_id)
+        return OK
+    except curses.error:
+        return ERR
 
 def derwin(srcwin, nlines, ncols, begin_y, begin_x):
     if NCURSES:
@@ -1050,94 +1032,84 @@ def derwin(srcwin, nlines, ncols, begin_y, begin_x):
         return ctypes.c_void_p(pdlib.derwin(srcwin, nlines, ncols, begin_y, begin_x))
 
 def doupdate():
-    if NCURSES:
-        try:
-            return curses.doupdate()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.doupdate()
+    try:
+        return curses.doupdate()
+    except curses.error:
+        return ERR
 
 def echo():
-    if NCURSES:
-        try:
-            return curses.echo()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.echo()
+    try:
+        return curses.echo()
+    except curses.error:
+        return ERR
 
 def wechochar(scr_id, ch, attr=A_NORMAL):
-    if NCURSES:
-        try:
-            return scr_id.echochar(ch | attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wechochar(scr_id, ch | attr)
+    try:
+        return scr_id.echochar(ch | attr)
+    except curses.error:
+        return ERR
 
 def wenclose(scr_id, y, x):
-    if NCURSES:
-        try:
-            return scr_id.enclose(y, x)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wenclose(scr_id, y, x)
+    try:
+        return scr_id.enclose(y, x)
+    except curses.error:
+        return ERR
 
 def endwin():
-    if NCURSES:
-        try:
-            return curses.endwin()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.endwin()
+    try:
+        return curses.endwin()
+    except curses.error:
+        return ERR
 
 def werase(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.erase()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.werase(scr_id)
+    try:
+        return scr_id.erase()
+    except curses.error:
+        return ERR
 
 def erasechar():   # TODO: this might not be portable across platforms yet
-    if NCURSES:
-        try:
-            return curses.erasechar()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.erasechar()
+    try:
+        return curses.erasechar()
+    except curses.error:
+        return ERR
 
 def filter():
-    if NCURSES:
-        try:
-            return curses.filter()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.filter()
+    try:
+        return curses.filter()
+    except curses.error:
+        return ERR
 
 def flash():
-    if NCURSES:
-        try:
-            return curses.flash()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.flash()
+    try:
+        return curses.flash()
+    except curses.error:
+        return ERR
 
 def flushinp():
-    if NCURSES:
-        try:
-            return curses.flushinp()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.flushinp()
+    try:
+        return curses.flushinp()
+    except curses.error:
+        return ERR
 
 def getbegyx(scr_id):
     if NCURSES:
@@ -1151,24 +1123,24 @@ def getbegyx(scr_id):
         return (y, x)
 
 def wgetch(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.getch()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wgetch(scr_id)
+    try:
+        return scr_id.getch()
+    except curses.error:
+        return ERR
 
 def wgetkey(scr_id, y=-1, x=-1):
-    if NCURSES:
-        try:
-            if (y == -1) or (x == -1): return scr_id.getkey()
-            return scr_id.getkey(y, x)
-        except curses.error:
-            return ERR
-    else:
-        if (y == -1) or (x == -1): return pdlib.keyname(wgetch(scr_id))
-        return pdlib.keyname(mvwgetch(scr_id, y, x)).decode()
+    if not NCURSES:
+        return (
+            pdlib.keyname(wgetch(scr_id))
+            if (y == -1) or (x == -1)
+            else pdlib.keyname(mvwgetch(scr_id, y, x)).decode()
+        )
+    try:
+        return scr_id.getkey() if (y == -1) or (x == -1) else scr_id.getkey(y, x)
+    except curses.error:
+        return ERR
 
 
 def getmaxyx(scr_id):
@@ -1227,13 +1199,12 @@ def getsyx():
         return getyx(curscr)
 
 def getwin(file):   # THIS IS NOT CROSS-PLATFORM YET, AVOID IF POSSIBLE
-    if NCURSES:
-        try:
-            return curses.getwin(file)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         raise Exception("UNICURSES_GETWIN: 'getwin' is unavailable under Windows!")
+    try:
+        return curses.getwin(file)
+    except curses.error:
+        return ERR
 
 def getyx(scr_id):
     if NCURSES:
@@ -1247,112 +1218,100 @@ def getyx(scr_id):
         return (cy,cx)
 
 def halfdelay(tenths):
-    if NCURSES:
-        try:
-            return curses.halfdelay(tenths)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.halfdelay(tenths)
+    try:
+        return curses.halfdelay(tenths)
+    except curses.error:
+        return ERR
 
 def has_colors():
-    if NCURSES:
-        try:
-            return curses.has_colors()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.has_colors() == 1)
+    try:
+        return curses.has_colors()
+    except curses.error:
+        return ERR
 
 def has_ic():
-    if NCURSES:
-        try:
-            return curses.has_ic()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.has_ic() == 1)
+    try:
+        return curses.has_ic()
+    except curses.error:
+        return ERR
 
 def has_il():
-    if NCURSES:
-        try:
-            return curses.has_il()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.has_il() == 1)
+    try:
+        return curses.has_il()
+    except curses.error:
+        return ERR
 
 def has_key(ch):
-    if NCURSES:
-        try:
-            return curses.has_key(ch)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.has_key(ch) == 1)
+    try:
+        return curses.has_key(ch)
+    except curses.error:
+        return ERR
 
 def whline(scr_id, ch, n):
-    if NCURSES:
-        try:
-            return scr_id.hline(ch, n)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.whline(scr_id, ch, n)
+    try:
+        return scr_id.hline(ch, n)
+    except curses.error:
+        return ERR
 
 def idcok(scr_id, flag):    # THIS IS NOT PORTABLE (IT'S NOP ON PDCURSES)
-    if NCURSES:
-        try:
-            return scr_id.idcok(flag)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.idcok(scr_id, flag)
+    try:
+        return scr_id.idcok(flag)
+    except curses.error:
+        return ERR
 
 def idlok(scr_id, yes):     # THIS IS NOT PORTABLE (IT'S NOP ON PDCURSES)
-    if NCURSES:
-        try:
-            return scr_id.idlok(yes)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.idlok(scr_id, yes)
+    try:
+        return scr_id.idlok(yes)
+    except curses.error:
+        return ERR
 
 def immedok(scr_id, flag):
-    if NCURSES:
-        try:
-            return scr_id.immedok(flag)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.immedok(scr_id, flag)
+    try:
+        return scr_id.immedok(flag)
+    except curses.error:
+        return ERR
 
 def winch(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.inch()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.winch(scr_id)
+    try:
+        return scr_id.inch()
+    except curses.error:
+        return ERR
 
 def init_color(color, r, g, b):
-    if NCURSES:
-        try:
-            return curses.init_color(color, r, g, b)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.init_color(color, r, g, b)
+    try:
+        return curses.init_color(color, r, g, b)
+    except curses.error:
+        return ERR
 
 def init_pair(pair_number, fg, bg):
-    if NCURSES:
-        try:
-            return curses.init_pair(pair_number, fg, bg)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.init_pair(pair_number, fg, bg)
+    try:
+        return curses.init_pair(pair_number, fg, bg)
+    except curses.error:
+        return ERR
 
 def initscr():
     global stdscr
@@ -1368,22 +1327,20 @@ def initscr():
         return stdscr
 
 def winsch(scr_id, ch, attr=A_NORMAL):
-    if NCURSES:
-        try:
-            return scr_id.insch(ch, attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.winsch(scr_id, ch | attr)
+    try:
+        return scr_id.insch(ch, attr)
+    except curses.error:
+        return ERR
 
 def winsdelln(scr_id, nlines):
-    if NCURSES:
-        try:
-            return scr_id.insdelln(nlines)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.winsdelln(scr_id, nlines)
+    try:
+        return scr_id.insdelln(nlines)
+    except curses.error:
+        return ERR
 
 def winsstr(scr_id, strn, attr = "NO_USE"):
     if NCURSES:
@@ -1425,67 +1382,60 @@ def winstr(scr_id, n=-1):
         return t_str.value.decode()
 
 def isendwin():
-    if NCURSES:
-        try:
-            return curses.isendwin()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.isendwin() == 1)
+    try:
+        return curses.isendwin()
+    except curses.error:
+        return ERR
 
 def winsertln(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.insertln()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.winsertln(scr_id)
+    try:
+        return scr_id.insertln()
+    except curses.error:
+        return ERR
 
 def is_linetouched(scr_id, line):
-    if NCURSES:
-        try:
-            return scr_id.is_linetouched(line)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.is_linetouched(scr_id, line) == 1)
+    try:
+        return scr_id.is_linetouched(line)
+    except curses.error:
+        return ERR
 
 def is_wintouched(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.is_wintouched()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return (pdlib.is_wintouched(scr_id) == 1)
+    try:
+        return scr_id.is_wintouched()
+    except curses.error:
+        return ERR
 
 def keyname(k):
-    if NCURSES:
-        try:
-            return curses.keyname(k)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.keyname(k).decode()
+    try:
+        return curses.keyname(k)
+    except curses.error:
+        return ERR
 
 def keypad(scr_id, yes):
-    if NCURSES:
-        try:
-            return scr_id.keypad(yes)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.keypad(scr_id, yes)
+    try:
+        return scr_id.keypad(yes)
+    except curses.error:
+        return ERR
 
 def killchar():   # TODO: this might not be portable across platforms yet
-    if NCURSES:
-        try:
-            return curses.killchar()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.killchar()
+    try:
+        return curses.killchar()
+    except curses.error:
+        return ERR
 
 def leaveok(scr_id, yes):
     global PDC_LEAVEOK
@@ -1500,58 +1450,52 @@ def leaveok(scr_id, yes):
         return pdlib.leaveok(scr_id, yes)
 
 def longname():
-    if NCURSES:
-        try:
-            return curses.longname()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.longname().decode()
+    try:
+        return curses.longname()
+    except curses.error:
+        return ERR
 
 def meta(scr_id, yes):
-    if NCURSES:
-        try:
-            return curses.meta(yes)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.meta(scr_id, yes)
+    try:
+        return curses.meta(yes)
+    except curses.error:
+        return ERR
 
 def mouseinterval(interval):
-    if NCURSES:
-        try:
-            return curses.mouseinterval(interval)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mouseinterval(interval)
+    try:
+        return curses.mouseinterval(interval)
+    except curses.error:
+        return ERR
 
 def mousemask(mmask):
-    if NCURSES:
-        try:
-            return curses.mousemask(mmask)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mousemask(mmask, None)
+    try:
+        return curses.mousemask(mmask)
+    except curses.error:
+        return ERR
 
 def wmove(scr_id, new_y, new_x):
-    if NCURSES:
-        try:
-            return scr_id.move(new_y, new_x)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wmove(scr_id, new_y, new_x)
+    try:
+        return scr_id.move(new_y, new_x)
+    except curses.error:
+        return ERR
 
 def mvwaddch(scr_id, y, x, ch, attr=A_NORMAL):
-    if NCURSES:
-        try:
-            return scr_id.addch(y, x, ch, attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwaddch(scr_id, y, x, ch | attr)
+    try:
+        return scr_id.addch(y, x, ch, attr)
+    except curses.error:
+        return ERR
 
 def mvwaddstr(scr_id, y, x, cstr, attr="NO_USE"):
     if NCURSES:
@@ -1580,50 +1524,45 @@ def mvwaddnstr(scr_id, y, x, cstr, n, attr="NO_USE"):
         return ret
 
 def mvwchgat(scr_id, y, x, num, attr, color, opts=None):
-    if NCURSES:
-        try:
-            return scr_id.chgat(y, x, num, attr | color_pair(color))
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwchgat(scr_id, y, x, num, attr, color, None)
+    try:
+        return scr_id.chgat(y, x, num, attr | color_pair(color))
+    except curses.error:
+        return ERR
 
 def mvwdelch(scr_id, y, x):
-    if NCURSES:
-        try:
-            return scr_id.delch(y,x)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwdelch(scr_id, y, x)
+    try:
+        return scr_id.delch(y,x)
+    except curses.error:
+        return ERR
 
 def mvwdeleteln(scr_id, y, x):
-    if NCURSES:
-        try:
-            move(scr_id, y, x)
-            return scr_id.deleteln()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwdeleteln(scr_id, y, x)
+    try:
+        move(scr_id, y, x)
+        return scr_id.deleteln()
+    except curses.error:
+        return ERR
 
 def mvderwin(scr_id, pary, parx):
-    if NCURSES:
-        try:
-            return scr_id.mvderwin(pary, parx)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvderwin(scr_id, pary, parx)
+    try:
+        return scr_id.mvderwin(pary, parx)
+    except curses.error:
+        return ERR
 
 def mvwgetch(scr_id, y, x):
-    if NCURSES:
-        try:
-            return scr_id.getch(y, x)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwgetch(scr_id, y, x)
+    try:
+        return scr_id.getch(y, x)
+    except curses.error:
+        return ERR
 
 def mvwgetstr(scr_id, y, x):
     if NCURSES:
@@ -1637,31 +1576,28 @@ def mvwgetstr(scr_id, y, x):
         return t_str.value.decode()
 
 def mvwhline(scr_id, y, x, ch, n):
-    if NCURSES:
-        try:
-            return scr_id.hline(y, x, ch, n)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwhline(scr_id, y, x, ch, n)
+    try:
+        return scr_id.hline(y, x, ch, n)
+    except curses.error:
+        return ERR
 
 def mvwinch(scr_id, y, x):
-    if NCURSES:
-        try:
-            return scr_id.inch(y, x)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwinch(scr_id, y, x)
+    try:
+        return scr_id.inch(y, x)
+    except curses.error:
+        return ERR
 
 def mvwinsch(scr_id, y, x, ch, attr=A_NORMAL):
-    if NCURSES:
-        try:
-            return scr_id.insch(y, x, ch, attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwinsch(scr_id, y, x, ch | attr)
+    try:
+        return scr_id.insch(y, x, ch, attr)
+    except curses.error:
+        return ERR
 
 def mvwinsstr(scr_id, y, x, strn, attr = "NO_USE"):
     if NCURSES:
@@ -1703,31 +1639,28 @@ def mvwinstr(scr_id, y, x, n=-1):
         return t_str.value.decode()
 
 def mvwvline(scr_id, y, x, ch, n):
-    if NCURSES:
-        try:
-            return scr_id.vline(y, x, ch, n)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwvline(scr_id, y, x, ch, n)
+    try:
+        return scr_id.vline(y, x, ch, n)
+    except curses.error:
+        return ERR
 
 def mvwin(scr_id, y, x):
-    if NCURSES:
-        try:
-            return scr_id.mvwin(y, x)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.mvwin(scr_id, y, x)
+    try:
+        return scr_id.mvwin(y, x)
+    except curses.error:
+        return ERR
 
 def napms(ms):
-    if NCURSES:
-        try:
-            return curses.napms(ms)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.napms(ms)
+    try:
+        return curses.napms(ms)
+    except curses.error:
+        return ERR
 
 def newpad(nlines, ncols):
     if NCURSES:
@@ -1750,103 +1683,92 @@ def newwin(nlines, ncols, begin_y, begin_x):
         return ctypes.c_void_p(pdlib.newwin(nlines, ncols, begin_y, begin_x))
 
 def nl(): 
-    if NCURSES:
-        try:
-            return curses.nl()
-        except curses.error:
-            return ERR
-    else:
-         return pdlib.nl()
+    if not NCURSES:
+        return pdlib.nl()
+    try:
+        return curses.nl()
+    except curses.error:
+        return ERR
 
 def nocbreak():
-    if NCURSES:
-        try:
-            return curses.nocbreak()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.nocbreak()
+    try:
+        return curses.nocbreak()
+    except curses.error:
+        return ERR
 
 def nodelay(scr_id, yes):
-    if NCURSES:
-        try:
-            return scr_id.nodelay(yes)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.nodelay(scr_id, yes)
+    try:
+        return scr_id.nodelay(yes)
+    except curses.error:
+        return ERR
 
 def noecho():
-    if NCURSES:
-        try:
-            return curses.noecho()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.noecho()
+    try:
+        return curses.noecho()
+    except curses.error:
+        return ERR
 
 def nonl(): 
-    if NCURSES:
-        try:
-            return curses.nonl()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.nonl()
+    try:
+        return curses.nonl()
+    except curses.error:
+        return ERR
 
 def noqiflush():
-    if NCURSES:
-        try:
-            return curses.noqiflush()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.noqiflush()
+    try:
+        return curses.noqiflush()
+    except curses.error:
+        return ERR
 
 def noraw():
-    if NCURSES:
-        try:
-            return curses.noraw()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.noraw()
+    try:
+        return curses.noraw()
+    except curses.error:
+        return ERR
 
 def notimeout(scr_id, yes):
-    if NCURSES:
-        try:
-            return scr_id.notimeout(yes)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.notimeout(scr_id, yes)
+    try:
+        return scr_id.notimeout(yes)
+    except curses.error:
+        return ERR
 
 def noutrefresh(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.noutrefresh()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wnoutrefresh(scr_id)
+    try:
+        return scr_id.noutrefresh()
+    except curses.error:
+        return ERR
 
 def overlay(src_id, dest_id):
-    if NCURSES:
-        try:
-            return src_id.overlay(dest_id)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.overlay(src_id, dest_id)
+    try:
+        return src_id.overlay(dest_id)
+    except curses.error:
+        return ERR
 
 def overwrite(src_id, dest_id):
-    if NCURSES:
-        try:
-            return src_id.overwrite(dest_id)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.overwrite(src_id, dest_id)
+    try:
+        return src_id.overwrite(dest_id)
+    except curses.error:
+        return ERR
 
 def pair_content(pair_number):
     if NCURSES:
@@ -1861,31 +1783,28 @@ def pair_content(pair_number):
         return (fg.value, bg.value)
 
 def pair_number(attr):
-    if NCURSES:
-        try:
-            return curses.pair_number(attr)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return PD_PAIR_NUMBER(attr)
+    try:
+        return curses.pair_number(attr)
+    except curses.error:
+        return ERR
 
 def prefresh(scr_id, pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol):
-    if NCURSES:
-        try:
-            return scr_id.refresh(pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.prefresh(scr_id, pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol)
+    try:
+        return scr_id.refresh(pminrow, pmincol, sminrow, smincol, smaxrow, smaxcol)
+    except curses.error:
+        return ERR
 
 def putp(cstring):
-    if NCURSES:
-        try:
-            return curses.putp(cstring)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.putp(CSTR(cstring))
+    try:
+        return curses.putp(cstring)
+    except curses.error:
+        return ERR
 
 def putwin(scr_id, file):    # THIS IS NOT CROSS-PLATFORM YET, AVOID IF POSSIBLE
     if NCURSES:
@@ -1897,94 +1816,84 @@ def putwin(scr_id, file):    # THIS IS NOT CROSS-PLATFORM YET, AVOID IF POSSIBLE
         raise Exception("UNICURSES_PUTWIN: 'putwin' is unavailable under Windows!")
 
 def qiflush():
-    if NCURSES:
-        try:
-            return curses.qiflush()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.qiflush()
+    try:
+        return curses.qiflush()
+    except curses.error:
+        return ERR
 
 def raw():
-    if NCURSES:
-        try:
-            return curses.raw()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.raw()
+    try:
+        return curses.raw()
+    except curses.error:
+        return ERR
 
 def wredrawln(scr_id, beg, num):
-    if NCURSES:
-        try:
-            return scr_id.redrawln(beg, num)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wredrawln(scr_id, beg, num)
+    try:
+        return scr_id.redrawln(beg, num)
+    except curses.error:
+        return ERR
 
 def redrawwin(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.redrawwin()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.redrawwin(scr_id)
+    try:
+        return scr_id.redrawwin()
+    except curses.error:
+        return ERR
 
 def wrefresh(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.refresh()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wrefresh(scr_id)
+    try:
+        return scr_id.refresh()
+    except curses.error:
+        return ERR
 
 def reset_prog_mode():
-    if NCURSES:
-        try:
-            return curses.reset_prog_mode()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.reset_prog_mode()
+    try:
+        return curses.reset_prog_mode()
+    except curses.error:
+        return ERR
 
 def reset_shell_mode():
-    if NCURSES:
-        try:
-            return curses.reset_shell_mode()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.reset_shell_mode()
+    try:
+        return curses.reset_shell_mode()
+    except curses.error:
+        return ERR
 
 def wscrl(scr_id, lines=1):
-    if NCURSES:
-        try:
-            return scr_id.scroll(lines)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wscrl(scr_id, lines)
+    try:
+        return scr_id.scroll(lines)
+    except curses.error:
+        return ERR
 
 def scrollok(scr_id, flag):
-    if NCURSES:
-        try:
-            return scr_id.scrollok(flag)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.scrollok(scr_id, flag)
+    try:
+        return scr_id.scrollok(flag)
+    except curses.error:
+        return ERR
 
 def wsetscrreg(scr_id, top, bottom):
-    if NCURSES:
-        try:
-            return scr_id.setscrreg(top, bottom)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wsetscrreg(scr_id, top, bottom)
+    try:
+        return scr_id.setscrreg(top, bottom)
+    except curses.error:
+        return ERR
 
 def setsyx(y, x):
     global PDC_LEAVEOK
@@ -1995,47 +1904,40 @@ def setsyx(y, x):
             return ERR
     else:
         curscr = PD_GET_CURSCR()
-        if y == x == -1:
-            PDC_LEAVEOK = True
-        else:
-            PDC_LEAVEOK = False
+        PDC_LEAVEOK = y == x == -1
         return pdlib.setsyx(y, x)
 
 def setupterm(termstr, fd):
-    if NCURSES:
-        try:
-            return curses.setupterm(termstr, fd)
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.setupterm(termstr, fd, None)
+    try:
+        return curses.setupterm(termstr, fd)
+    except curses.error:
+        return ERR
 
 def wstandend(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.standend()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wstandend(scr_id)
+    try:
+        return scr_id.standend()
+    except curses.error:
+        return ERR
 
 def wstandout(scr_id):
-    if NCURSES:
-        try:
-            return scr_id.standout()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.wstandout(scr_id)
+    try:
+        return scr_id.standout()
+    except curses.error:
+        return ERR
 
 def start_color():
-    if NCURSES:
-        try:
-            return curses.start_color()
-        except curses.error:
-            return ERR
-    else:
+    if not NCURSES:
         return pdlib.start_color()
+    try:
+        return curses.start_color()
+    except curses.error:
+        return ERR
 
 def subpad(scrwin, nlines, ncols, begin_y, begin_x):
     if NCURSES:
